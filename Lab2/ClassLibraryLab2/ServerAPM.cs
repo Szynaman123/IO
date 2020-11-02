@@ -11,8 +11,9 @@ namespace ClassLibraryLab2
 {
     public class ServerAPM:ServerTcp
     {
+        private static byte[] buffer = new byte[256];
         public delegate void TransmissionDataDelegate(NetworkStream stream);
-
+        
         public ServerAPM(IPAddress ip, int port) : base(ip, port) { 
         
         }
@@ -42,48 +43,37 @@ namespace ClassLibraryLab2
         
 
         }
-
+        public static void WriteCallback(IAsyncResult ar) {
+            NetworkStream s = (NetworkStream)ar.AsyncState;
+            
+            s.EndWrite(ar);
+            s.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(ReadCallback),s);
+        }
         protected override void BeginDataTransmission(NetworkStream stream)
         {
-            FileStream fs = new FileStream("plik.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite);
             
-            byte[] buffer = new byte[Buffer_size];
-            string w,s;
-            while (true) {
-                try
-                {
-                    string tekst = "zapis-w odczyt-r";
-                    byte[] tmp = Encoding.ASCII.GetBytes(tekst);
-                    stream.Write(tmp, 0, tmp.Length);
-                    int message_size = stream.Read(buffer, 0, Buffer_size);
-                    w = Encoding.ASCII.GetString(buffer);
-                    if (w.StartsWith("w"))
-                    {
-                        message_size = stream.Read(buffer, 0, Buffer_size);
-                        fs.Write(buffer, 0, message_size);
-
-                    }
-                    else if (w.StartsWith("r"))
-                    {
-                        int x = fs.Read(buffer, 0, Buffer_size);
-                        stream.Write(buffer, 0, x);
-
-                    }
-                    else 
-                    {
-                        string c = "bledny znak";
-                        byte[] y = Encoding.ASCII.GetBytes(c);
-                        stream.Write(y, 0, y.Length);
-                    }
-
-                }
-                catch (IOException e) {
-                    break;
-                }               
             
-            }
+            
+            
+
+            
+                    stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(ReadCallback), stream);
+                   
+                    
+
+                
+                
         }
 
-        
+        public static void ReadCallback(IAsyncResult ar)
+        {
+            NetworkStream s = (NetworkStream)ar.AsyncState;
+            
+            
+
+            int n = s.EndRead(ar);
+            s.BeginWrite(buffer, 0, n,new AsyncCallback(WriteCallback), s);
+            
+        }
     }
 }
