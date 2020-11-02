@@ -68,11 +68,14 @@ namespace ClassLibraryLab2
         public static void ReadCallback(IAsyncResult ar)
         {
             NetworkStream s = (NetworkStream)ar.AsyncState;
-            
+            string w;
             
 
             int n = s.EndRead(ar);
-            s.BeginWrite(buffer, 0, n,new AsyncCallback(WriteCallback), s);
+            w = Encoding.ASCII.GetString(buffer, 0, n);
+            w = w.ToUpper();
+            byte[] x = Encoding.ASCII.GetBytes(w);
+            s.BeginWrite(x, 0, n,new AsyncCallback(WriteCallback), s);
             
         }
     }
